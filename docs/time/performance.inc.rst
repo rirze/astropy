@@ -10,3 +10,36 @@ Performance Tips
 
 Here we provide some tips and tricks for how to optimize performance of code
 using `astropy.time`.
+
+Calculating Light Travel Times For Tens Of Thousands Of Sources
+================
+
+.. code-block:: python
+                
+                import numpy as np
+                import astropy.coordinates as coord
+                import astropy.units as u
+                from astropy.time import Time
+
+                ra = np.random.normal(0.0, 1.0, 50000)
+                dec = np.random.normal(0.0, 1.0, 50000)
+
+                coos = coord.SkyCoord(ra, dec, unit=u.deg)
+                observatory = coord.EarthLocation.of_site('lapalma')
+
+                %time ltts = [time.light_travel_time(coo, location=coos.location) for coo in coos]
+                CPU times: user 16min 45s, sys: 5.08 s, total: 16min 50s
+                Wall time: 16min 58s
+
+                %time time.light_travel_time(coos, location=observatory)
+                CPU times: user 56 ms, sys: 3.21 ms, total: 59.2 ms
+                Wall time: 58.2 ms
+                <TimeDelta object: scale='tdb' format='jd' value=[ 0.00497521  0.00495056  0.00497048 ...,  0.00499594  0.0049838
+                0.00502038]>
+For user cases where there are thousands of times for each source, broadcasting can be used:
+
+.. code-block:: python
+                times = Time.now() + np.linspace(0, 3, 1000)*u.day
+                %time ltts = times.light_travel_time(coos[:, np.newaxis], location=observatory)
+                CPU times: user 13.8 s, sys: 13 s, total: 26.8 s
+                Wall time: 27.9 s
